@@ -34,6 +34,7 @@
 #include "libUtils/DetachedFunction.h"
 #include "libUtils/Logger.h"
 #include "libUtils/SanityChecks.h"
+#include "libUtils/UpgradeManager.h"
 
 using namespace std;
 using namespace boost::multiprecision;
@@ -311,6 +312,13 @@ void DirectoryService::ProcessFinalBlockConsensusWhenDone()
         if (!LOOKUP_NODE_MODE)
         {
             BlockStorage::GetBlockStorage().PopFrontTxBodyDB();
+        }
+
+        if (m_mediator.m_curSWInfo.GetUpgradeDS()
+            == (((m_mediator.m_currentEpochNum + 1) / NUM_FINAL_BLOCK_PER_POW)
+                + 2))
+        {
+            UpgradeManager::GetInstance().ReplaceNode(m_mediator);
         }
     }
 
