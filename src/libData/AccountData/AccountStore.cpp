@@ -259,6 +259,7 @@ void AccountStore::MoveUpdatesToDisk()
     m_state.db()->commit();
     prevRoot = m_state.root();
     MoveRootToDisk(prevRoot);
+    LOG_GENERAL(INFO, "Stored state root : " << prevRoot);
 }
 
 void AccountStore::DiscardUnsavedUpdates()
