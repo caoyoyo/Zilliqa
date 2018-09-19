@@ -317,18 +317,6 @@ void DirectoryService::ProcessFinalBlockConsensusWhenDone()
         {
             BlockStorage::GetBlockStorage().PopFrontTxBodyDB();
         }
-
-        if (m_mediator.m_curSWInfo.GetUpgradeDS()
-            == (((m_mediator.m_currentEpochNum + 1) / NUM_FINAL_BLOCK_PER_POW)
-                + 2))
-        {
-            m_mediator.UpdateDSBlockRand();
-            m_mediator.UpdateTxBlockRand();
-            auto func = [this]() mutable -> void {
-                UpgradeManager::GetInstance().ReplaceNode(m_mediator);
-            };
-            DetachedFunction(1, func);
-        }
     }
 
     m_mediator.UpdateDSBlockRand();
@@ -381,6 +369,15 @@ void DirectoryService::ProcessFinalBlockConsensusWhenDone()
         << m_mediator.m_txBlockChain.GetLastBlock().GetHeader().GetBlockNum()
             + 1
         << "] AFTER SENDING FINAL BLOCK");
+
+    if (m_mediator.m_curSWInfo.GetUpgradeDS()
+        == (((m_mediator.m_currentEpochNum) / NUM_FINAL_BLOCK_PER_POW) + 2))
+    {
+        auto func = [this]() mutable -> void {
+            UpgradeManager::GetInstance().ReplaceNode(m_mediator);
+        };
+        DetachedFunction(1, func);
+    }
 
     AccountStore::GetInstance().InitTemp();
     m_stateDeltaFromShards.clear();

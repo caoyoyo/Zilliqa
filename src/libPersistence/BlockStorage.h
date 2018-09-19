@@ -41,11 +41,13 @@ class BlockStorage : public Singleton<BlockStorage>
     std::list<std::shared_ptr<LevelDB>> m_txBodyDBs;
     std::shared_ptr<LevelDB> m_txBodyDB;
     std::shared_ptr<LevelDB> m_txBodyTmpDB;
+    std::shared_ptr<LevelDB> m_dsCommitteeDB;
 
     BlockStorage()
         : m_metadataDB(std::make_shared<LevelDB>("metadata"))
         , m_dsBlockchainDB(std::make_shared<LevelDB>("dsBlocks"))
         , m_txBlockchainDB(std::make_shared<LevelDB>("txBlocks"))
+        , m_dsCommitteeDB(std::make_shared<LevelDB>("dsCommittee"))
     {
         if (LOOKUP_NODE_MODE)
         {
@@ -67,6 +69,7 @@ public:
         TX_BODIES,
         TX_BODY,
         TX_BODY_TMP,
+        DS_COMMITTEE,
     };
 
     /// Returns the singleton BlockStorage instance.
@@ -140,6 +143,15 @@ public:
 
     /// Retrieve Last Transactions Trie Root Hash
     bool GetMetadata(MetaType type, std::vector<unsigned char>& data);
+
+    /// Save DS committee
+    bool
+    PutDSCommittee(const std::shared_ptr<std::deque<std::pair<PubKey, Peer>>>&
+                       dsCommittee);
+
+    /// Retrieve DS committee
+    bool GetDSCommittee(
+        std::shared_ptr<std::deque<std::pair<PubKey, Peer>>>& dsCommittee);
 
     /// Clean a DB
     bool ResetDB(DBTYPE type);
