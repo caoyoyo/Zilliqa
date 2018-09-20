@@ -1362,7 +1362,8 @@ bool Lookup::ProcessSetDSInfoFromSeed(const vector<unsigned char>& message,
 }
 
 bool Lookup::ProcessSetDSBlockFromSeed(const vector<unsigned char>& message,
-                                       unsigned int offset, const Peer& from)
+                                       unsigned int offset,
+                                       [[gnu::unused]] const Peer& from)
 {
     // #ifndef IS_LOOKUP_NODE TODO: uncomment later
     // Message = [8-byte lowBlockNum][8-byte highBlockNum][DSBlock][DSBlock]... (highBlockNum - lowBlockNum + 1) times
@@ -1376,32 +1377,14 @@ bool Lookup::ProcessSetDSBlockFromSeed(const vector<unsigned char>& message,
 
     unique_lock<mutex> lock(m_mutexSetDSBlockFromSeed);
 
-    if (IsMessageSizeInappropriate(message.size(), offset,
-                                   sizeof(uint64_t) + sizeof(uint64_t)))
+    uint64_t lowBlockNum;
+    uint64_t highBlockNum;
+    vector<DSBlock> dsBlocks;
+    if (!Messenger::GetLookupSetDSBlockFromSeed(message, offset, lowBlockNum,
+                                                highBlockNum, dsBlocks))
     {
-        return false;
-    }
-
-    // 8-byte lower-limit block number
-    uint64_t lowBlockNum
-        = Serializable::GetNumber<uint64_t>(message, offset, sizeof(uint64_t));
-    offset += sizeof(uint64_t);
-
-    // 8-byte upper-limit block number
-    uint64_t highBlockNum
-        = Serializable::GetNumber<uint64_t>(message, offset, sizeof(uint64_t));
-    offset += sizeof(uint64_t);
-
-    LOG_EPOCH(INFO, to_string(m_mediator.m_currentEpochNum).c_str(),
-              "ProcessSetDSBlockFromSeed sent by " << from << " for blocks "
-                                                   << lowBlockNum << " to "
-                                                   << highBlockNum);
-
-    // since we will usually only enable sending of 500 blocks max, casting to uint32_t should be safe
-    if (IsMessageSizeInappropriate(message.size(), offset,
-                                   (uint32_t)(highBlockNum - lowBlockNum + 1)
-                                       * DSBlock::GetMinSize()))
-    {
+        LOG_EPOCH(WARNING, to_string(m_mediator.m_currentEpochNum).c_str(),
+                  "Messenger::SetLookupGetDSBlockFromSeed failed.");
         return false;
     }
 
@@ -1418,42 +1401,22 @@ bool Lookup::ProcessSetDSBlockFromSeed(const vector<unsigned char>& message,
     }
     else
     {
-        for (uint64_t blockNum = lowBlockNum; blockNum <= highBlockNum;
-             blockNum++)
+
+        for (const auto& dsblock : dsBlocks)
         {
-            // DSBlock dsBlock(message, offset);
-            DSBlock dsBlock;
-            if (dsBlock.Deserialize(message, offset) != 0)
-            {
-                LOG_GENERAL(WARNING, "We failed to deserialize dsBlock.");
-                return false;
-            }
-            offset += dsBlock.GetSerializedSize();
-
-            LOG_EPOCH(INFO, to_string(m_mediator.m_currentEpochNum).c_str(),
-                      "dsblock.GetHeader().GetDifficulty(): "
-                          << (int)dsBlock.GetHeader().GetDifficulty());
-            LOG_EPOCH(INFO, to_string(m_mediator.m_currentEpochNum).c_str(),
-                      "dsblock.GetHeader().GetBlockNum(): "
-                          << dsBlock.GetHeader().GetBlockNum());
-            LOG_EPOCH(INFO, to_string(m_mediator.m_currentEpochNum).c_str(),
-                      "dsblock.GetHeader().GetLeaderPubKey().hex(): "
-                          << dsBlock.GetHeader().GetLeaderPubKey());
-
-            m_mediator.m_dsBlockChain.AddBlock(dsBlock);
-
+            m_mediator.m_dsBlockChain.AddBlock(dsblock);
             // Store DS Block to disk
             vector<unsigned char> serializedDSBlock;
-            dsBlock.Serialize(serializedDSBlock, 0);
+            dsblock.Serialize(serializedDSBlock, 0);
             BlockStorage::GetBlockStorage().PutDSBlock(
-                dsBlock.GetHeader().GetBlockNum(), serializedDSBlock);
+                dsblock.GetHeader().GetBlockNum(), serializedDSBlock);
             if (!LOOKUP_NODE_MODE
                 && !BlockStorage::GetBlockStorage().PushBackTxBodyDB(
-                       dsBlock.GetHeader().GetBlockNum()))
+                       dsblock.GetHeader().GetBlockNum()))
             {
                 if (BlockStorage::GetBlockStorage().PopFrontTxBodyDB()
                     && BlockStorage::GetBlockStorage().PushBackTxBodyDB(
-                           dsBlock.GetHeader().GetBlockNum()))
+                           dsblock.GetHeader().GetBlockNum()))
                 {
                     // Do nothing
                 }
