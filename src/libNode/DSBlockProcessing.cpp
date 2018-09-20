@@ -85,7 +85,7 @@ void Node::StoreDSBlockToDisk(const DSBlock& dsblock)
     }
 }
 
-void Node::UpdateDSCommiteeComposition(const Peer& winnerpeer)
+void Node::UpdateDSCommiteeComposition(const map<PubKey, Peer> winners)
 {
     LOG_MARKER();
 
@@ -496,7 +496,7 @@ bool Node::ProcessDSBlock(const vector<unsigned char>& message,
     }
 
     m_mediator.UpdateDSBlockRand(); // Update the rand1 value for next PoW
-    UpdateDSCommiteeComposition(newleaderIP);
+    UpdateDSCommiteeComposition(dsblock.GetHeader().GetDSPoWWinners());
 
     if (!LOOKUP_NODE_MODE)
     {

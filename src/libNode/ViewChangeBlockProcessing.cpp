@@ -87,7 +87,7 @@ void Node::StoreDSBlockToDisk(const DSBlock& dsblock)
 }
 **/
 
-void Node::UpdateDSCommiteeComposition()
+void Node::UpdateDSCommiteeCompositionAfterVC()
 {
     LOG_MARKER();
 
@@ -258,7 +258,7 @@ bool Node::ProcessVCBlock(const vector<unsigned char>& message,
 
     for (unsigned int x = 0; x < newCandidateLeader; x++)
     {
-        UpdateDSCommiteeComposition(); // TODO: If VC select a random leader, we need to change the way we update ds composition.
+        UpdateDSCommiteeCompositionAfterVC(); // TODO: If VC select a random leader, we need to change the way we update ds composition.
     }
 
     // TDOO
