@@ -314,6 +314,14 @@ bool Node::ProcessStartPoW(const vector<unsigned char>& message,
                                        .GetBlockNum()
                       + 1);
 
+    if (m_mediator.m_currentEpochNum > 1)
+    {
+        LOG_GENERAL(WARNING,
+                    "Node::ProcessStartPoW is a bootstrape function, it "
+                    "shouldn't be called after blockchain started.");
+        return false;
+    }
+
     uint64_t block_num;
     uint8_t difficulty = POW_DIFFICULTY;
     uint8_t dsDifficulty = DS_POW_DIFFICULTY;
