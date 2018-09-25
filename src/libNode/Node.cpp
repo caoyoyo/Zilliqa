@@ -112,7 +112,12 @@ void Node::Install(unsigned int syncType, bool toRetrieveHistory)
                     if (m_mediator.m_DSCommittee->front().first
                         == m_mediator.m_selfKey.second)
                     {
-                        LOG_GENERAL(INFO, "Set as DS leader.");
+                        LOG_GENERAL(
+                            INFO,
+                            "Set as DS leader: "
+                                << m_mediator.m_selfPeer.GetPrintableIPAddress()
+                                << ":"
+                                << m_mediator.m_selfPeer.m_listenPortHost);
                         auto func = [this]() mutable -> void {
                             m_mediator.m_ds->SetDSNode(m_mediator.m_selfPeer);
                         };
@@ -120,7 +125,12 @@ void Node::Install(unsigned int syncType, bool toRetrieveHistory)
                     }
                     else
                     {
-                        LOG_GENERAL(INFO, "Set as DS backup.");
+                        LOG_GENERAL(
+                            INFO,
+                            "Set as DS backup: "
+                                << m_mediator.m_selfPeer.GetPrintableIPAddress()
+                                << ":"
+                                << m_mediator.m_selfPeer.m_listenPortHost);
                         auto func = [this]() mutable -> void {
                             m_mediator.m_ds->SetDSNode(
                                 m_mediator.m_DSCommittee->front().second);
@@ -137,7 +147,11 @@ void Node::Install(unsigned int syncType, bool toRetrieveHistory)
             /// If this node is shard node, start pow
             if (DirectoryService::IDLE == m_mediator.m_ds->m_mode)
             {
-                LOG_GENERAL(INFO, "Set as shard node.");
+                LOG_GENERAL(INFO,
+                            "Set as shard node: "
+                                << m_mediator.m_selfPeer.GetPrintableIPAddress()
+                                << ":"
+                                << m_mediator.m_selfPeer.m_listenPortHost);
 #if 1 //clark
                 this_thread::sleep_for(chrono::seconds(10));
 #endif

@@ -444,7 +444,6 @@ bool BlockStorage::GetDSCommittee(
 
     for (it->SeekToFirst(); it->Valid(); it->Next())
     {
-        indexStr = it->key().ToString();
         dataStr = it->value().ToString();
         dsCommittee->emplace_back(
             PubKey(vector<unsigned char>(dataStr.begin(),
@@ -454,9 +453,9 @@ bool BlockStorage::GetDSCommittee(
                                        dataStr.end()),
                  0));
         LOG_GENERAL(INFO,
-                    "Retrieved DS committee:"
-                        << indexStr << ", " << dsCommittee->back().first << ", "
-                        << dsCommittee->back().second);
+                    "Retrieved DS committee: " << dsCommittee->back().first
+                                               << ", "
+                                               << dsCommittee->back().second);
     }
 
     delete it;
